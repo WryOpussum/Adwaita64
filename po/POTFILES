@@ -1,0 +1,7 @@
+data/com.github.WryOpussum.Adwaita64.desktop.in
+data/com.github.WryOpussum.Adwaita64.appdata.xml.in
+data/com.github.WryOpussum.Adwaita64.gschema.xml
+src/window.ui
+src/main.py
+src/window.py
+
