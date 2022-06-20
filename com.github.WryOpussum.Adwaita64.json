@@ -6,10 +6,13 @@
     "command" : "adwaita64",
     "finish-args" : [
         "--share=network",
-        "--share=ipc",
+        "--talk-name=org.freedesktop.Flatpak",
+	"--share=ipc",
         "--socket=fallback-x11",
         "--device=dri",
-        "--socket=wayland"
+        "--socket=wayland",
+        "--filesystem=host",
+	"--socket=session-bus"
     ],
     "cleanup" : [
         "/include",

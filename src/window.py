@@ -18,25 +18,27 @@
 import gi
 from gi.repository import Gtk, Gio, GObject, Adw
 from pathlib import Path
+import os
 
 global execBuffer
 execBuffer = Gtk.EntryBuffer()
 global nameBuffer
 nameBuffer = Gtk.EntryBuffer()
-global descBuffer
-descBuffer = Gtk.EntryBuffer()
 global listbox
 listbox=Gtk.ListBox()
 listbox.get_style_context().add_class(class_name='boxed-list')
 listbox.set_selection_mode(Gtk.SelectionMode.NONE)
 global liststore # We have to define liststore here instead of one line below because liststore is in the bind model
 liststore = Gio.ListStore()
-listbox.bind_model(liststore)
-global RowWidget
-RowWidget = Adw.ActionRow()
-RowWidget.add_suffix(Gtk.Button(label="Launch"))
 
 
+
+class Item(GObject.GObject):
+
+    title = GObject.property(type = str)
+
+    def __init__(self):
+        GObject.GObject.__init__(self)
 class Adwaita64Window(Gtk.ApplicationWindow):
 
     def __init__(self, **kwargs):
@@ -128,7 +130,6 @@ class addRepoDialog(Gtk.Dialog):
         content_area.set_margin_start(margin=12)
 
 
-        sm64exaloText = Gtk.Text()
         # Build the Combo Box
         self.repoSelectComboBox = Gtk.ComboBoxText.new()
         self.repoSelectComboBox.append("ex", "sm64ex")
@@ -148,10 +149,6 @@ class addRepoDialog(Gtk.Dialog):
         self.nameEntry = Gtk.Entry()
         self.nameEntry.set_placeholder_text("Name of the repo")
         self.nameEntry.set_buffer(nameBuffer)
-        # Description Entry
-        self.descEntry = Gtk.Entry()
-        self.descEntry.set_placeholder_text("A description. Like 'online multiplayer'.")
-        self.descEntry.set_buffer(descBuffer)
         # Add the OK button witch does the magic
         self.okButton = Gtk.Button()
         self.okButton.set_label("OK")
@@ -162,7 +159,6 @@ class addRepoDialog(Gtk.Dialog):
         content_area.append(self.checkCustomRepo)
         content_area.append(self.customRepoExecutable)
         content_area.append(self.nameEntry)
-        content_area.append(self.descEntry)
         content_area.append(self.okButton)
         # Show the Dialog
         self.show()
@@ -177,11 +173,23 @@ class addRepoDialog(Gtk.Dialog):
             self.customRepoExecutable.set_sensitive(False)
     def loadExecutableSelection(self, action, hi):
         executableSelection(parent=self)
-        customRepoExecutable.set_placeholder_text("")
+        self.customRepoExecutable.set_placeholder_text("")
     def onOK(self, action):
-        listbox.insert(Adw.ActionRow(title=f"{nameBuffer.get_text()}", subtitle=f"{descBuffer.get_text()}"), -1)
+        name = nameBuffer.get_text()
+        executable = execBuffer.get_text()
+        button = Gtk.Button(icon_name="media-playback-start-symbolic", margin_top=10, margin_bottom=10)
+        def onPress(action):
+            os.system(f'flatpak-spawn --host {executable}')
+        button.connect("clicked", onPress)
+        item = Adw.ActionRow(title=f"{name}")
+        item.add_suffix(button)
+        listbox.append(item)
+        nameBuffer.set_text("", 1)
         self.close()
-
+    def create_row_widget(self,item):
+        widget = Adw.ActionRow(title=f"{item.title}")
+        widget.set_suffix(Gtk.Button(label=f"{item.title}"))
+        return widget
 
 class executableSelection(Gtk.FileChooserDialog):
      home = Path.home()
@@ -224,5 +232,4 @@ class executableSelection(Gtk.FileChooserDialog):
             print(f'Selected Exec Path: {glocalfile.get_path()}')
 
         widget.close()
-
 
