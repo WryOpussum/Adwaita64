@@ -14,11 +14,15 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
 import gi
 from gi.repository import Gtk, Gio, GObject, Adw
 from pathlib import Path
 import os
+from multiprocessing import Process
+
+
+
+
 
 global execBuffer
 execBuffer = Gtk.EntryBuffer()
@@ -30,7 +34,8 @@ listbox.get_style_context().add_class(class_name='boxed-list')
 listbox.set_selection_mode(Gtk.SelectionMode.NONE)
 global liststore # We have to define liststore here instead of one line below because liststore is in the bind model
 liststore = Gio.ListStore()
-
+global toast_overlay
+toast_overlay = Adw.ToastOverlay.new()
 
 
 class Item(GObject.GObject):
@@ -40,6 +45,7 @@ class Item(GObject.GObject):
     def __init__(self):
         GObject.GObject.__init__(self)
 class Adwaita64Window(Gtk.ApplicationWindow):
+
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -52,8 +58,8 @@ class Adwaita64Window(Gtk.ApplicationWindow):
 
 
         self.box1 = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
-        self.set_child(self.box1)
-
+        self.set_child(toast_overlay)
+        toast_overlay.set_child(self.box1)
 
         # Create Gio Header Menu
 
@@ -87,9 +93,7 @@ class Adwaita64Window(Gtk.ApplicationWindow):
         # Create a GtkListBox that stores them repos
 
 
-
         self.box1.append(listbox)
-
 
     global ExecutableDir
 
@@ -175,17 +179,26 @@ class addRepoDialog(Gtk.Dialog):
         executableSelection(parent=self)
         self.customRepoExecutable.set_placeholder_text("")
     def onOK(self, action):
-        name = nameBuffer.get_text()
-        executable = execBuffer.get_text()
-        button = Gtk.Button(icon_name="media-playback-start-symbolic", margin_top=10, margin_bottom=10)
-        def onPress(action):
-            os.system(f'flatpak-spawn --host {executable}')
-        button.connect("clicked", onPress)
-        item = Adw.ActionRow(title=f"{name}")
-        item.add_suffix(button)
-        listbox.append(item)
-        nameBuffer.set_text("", 1)
-        self.close()
+        if self.checkCustomRepo.get_active():
+            name = nameBuffer.get_text()
+            executable = execBuffer.get_text()
+            button = Gtk.Button(icon_name="media-playback-start-symbolic", margin_top=10, margin_bottom=10)
+            def onPress(action):
+                def runCommand():
+                    os.system(f'flatpak-spawn --host --directory={executable} ./sm64.us.f3dex2e')
+
+                processes = []
+                proc1 = Process(target=runCommand)  # Creates the run process
+                processes.append(proc1)
+                proc1.start()  # starts the process
+                if proc1.is_alive():
+                    toast_overlay.add_toast(Adw.Toast(title=f"Launched  {name}", priority=Adw.ToastPriority.HIGH))
+            button.connect("clicked", onPress)
+            item = Adw.ActionRow(title=f"{name}")
+            item.add_suffix(button)
+            listbox.append(item)
+            nameBuffer.set_text("", 1)
+            self.close()
     def create_row_widget(self,item):
         widget = Adw.ActionRow(title=f"{item.title}")
         widget.set_suffix(Gtk.Button(label=f"{item.title}"))
@@ -197,8 +210,8 @@ class executableSelection(Gtk.FileChooserDialog):
         super().__init__(transient_for=parent, use_header_bar=True)
 
 
-        self.set_action(action=Gtk.FileChooserAction.OPEN)
-        title = 'Select a Executable'
+        self.set_action(action=Gtk.FileChooserAction.SELECT_FOLDER)
+        title = 'Select Executable Directory'
         self.set_title(title=title)
         self.set_modal(modal=True)
         self.set_default_size(600, 400)
@@ -232,4 +245,3 @@ class executableSelection(Gtk.FileChooserDialog):
             print(f'Selected Exec Path: {glocalfile.get_path()}')
 
         widget.close()
-
