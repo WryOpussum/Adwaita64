@@ -1,0 +1,73 @@
+using Gtk 4.0;
+using Adw 1;
+
+template $AddRepoWindow: Adw.Window {
+  resizable: false;
+  modal: true;
+  default-width: 600;
+  default-height: 500;
+  hide-on-close: true;
+  title: _("Add a repository");
+  ShortcutController {
+    Shortcut shortcut_escape {
+      trigger: "Escape";
+      action: "action(window.close)";
+    }
+  }
+  content: Adw.ToolbarView {
+      [top]
+      $AdwHeaderBar headerbar {
+        show-start-title-buttons: false;
+        show-end-title-buttons: false;
+        Button btn_cancel {
+          label: _("_Cancel");
+          use-underline: true;
+          clicked => $on_cancel_clicked();
+        }
+        [end]
+        Button btn_create {
+          label: _("_Create");
+          use-underline: true;
+          sensitive: false;
+          clicked => $on_create_clicked();
+          styles [
+            "suggested-action",
+          ]
+        }
+      }
+      Stack stack_add_repo {
+        transition-type: crossfade;
+
+        StackPage {
+          name: "page_add_repo";
+          child:
+          $AdwPreferencesPage {
+            title: _("Add a Repo");
+
+            Adw.PreferencesGroup {
+              Adw.EntryRow entry_name {
+                title: _("Name");
+                changed => $on_entry_row_change();
+              }
+            }
+            Adw.PreferencesGroup {
+              sensitive: true;
+              title: "Repository Settings";
+              Adw.ComboRow repo_selection {
+                title: _("Repository");
+                subtitle: _("The PC port to use");
+                model: StringList str_list_repo {};
+              }
+              Adw.ComboRow compile_speed {
+                title: _("Compile Speed");
+                subtitle: _("The faster it is the more resources it will take");
+                model: StringList str_list_speed {};
+              }
+            }
+          };
+        }
+      }
+    };
+    }
+
+

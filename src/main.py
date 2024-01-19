@@ -1,6 +1,6 @@
 # main.py
 #
-# Copyright 2022 Joshua Elmasri
+# Copyright 2024 Joshua Elmasri
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -14,6 +14,8 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
+# SPDX-License-Identifier: GPL-3.0-or-later
 
 import sys
 import gi
@@ -24,29 +26,34 @@ gi.require_version('Adw', '1')
 from gi.repository import Gtk, Gio, Adw
 from .window import Adwaita64Window
 
-
 class Adwaita64Application(Adw.Application):
     """The main application singleton class."""
 
     def __init__(self):
         super().__init__(application_id='com.github.WryOpussum.Adwaita64',
-                         flags=Gio.ApplicationFlags.FLAGS_NONE)
-        self.create_action('quit', self.on_quit_action, ['<primary>q'])
+                         flags=Gio.ApplicationFlags.DEFAULT_FLAGS)
+        self.create_action('quit', lambda *_: self.quit(), ['<primary>q'])
+        self.create_action('about', self.on_about_action)
         self.create_action('preferences', self.on_preferences_action)
 
-    def do_activate(self):
-        """Called when the application is activated.
 
-        We raise the application's main window, creating it if
-        necessary.
-        """
+    def do_activate(self):
         win = self.props.active_window
         if not win:
             win = Adwaita64Window(application=self)
         win.present()
 
-    def on_quit_action(self, action, _):
-        Gio.Application.quit(self)
+    def on_about_action(self, widget, _):
+        """Callback for the app.about action."""
+        about = Adw.AboutWindow(transient_for=self.props.active_window,
+                                application_name='adwaita64',
+                                application_icon='com.github.WryOpussum.Adwaita64',
+                                developer_name='Joshua Elmasri',
+                                version='0.1.0',
+                                developers=['Joshua Elmasri'],
+                                copyright='© 2024 Joshua Elmasri')
+        about.present()
+
     def on_preferences_action(self, widget, _):
         """Callback for the app.preferences action."""
         print('app.preferences action activated')
@@ -71,3 +78,4 @@ def main(version):
     """The application's entry point."""
     app = Adwaita64Application()
     return app.run(sys.argv)
+
