@@ -1,3 +1,3 @@
-# adwaita64
+# Adwaita64
 
-A description of this project.
+This is going to be a fully sandboxed flatpak that will compile multiple sm64 repositories
